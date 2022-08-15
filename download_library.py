@@ -1,4 +1,3 @@
-import logging
 import os
 import sqlite3
 
@@ -8,28 +7,26 @@ from os import path
 
 def start_db():
 	try:
-		sqliteConnection = sqlite3.connect('songs.db')
-		sqlite_create_table_query = '''CREATE TABLE IF NOT EXISTS song (
-					id INTEGER PRIMARY KEY,
-					google_id TEXT NOT NULL,
-					downloaded INTEGER);'''
+		connection = sqlite3.connect('songs.db')
+		sqlite_create_table_query = '''
+			CREATE TABLE IF NOT EXISTS song (id INTEGER PRIMARY KEY, google_id TEXT NOT NULL, downloaded INTEGER);
+		'''
 
-		cursor = sqliteConnection.cursor()
+		cursor = connection.cursor()
 		cursor.execute(sqlite_create_table_query)
 
-		sqliteConnection.commit()
+		connection.commit()
 
 		cursor.close()
 
-	except sqlite3.Error as exc:
+	except sqlite3.Error:
 		return
 
-	return sqliteConnection
+	return connection
 
 
 def insert_song(connection, song_id, failure=False):
-	sql = ''' INSERT INTO song (google_id, downloaded)
-	      VALUES(?,?) '''
+	sql = '''INSERT INTO song (google_id, downloaded) VALUES(?,?)'''
 
 	cursor = connection.cursor()
 	cursor.execute(sql, (song_id, int(not failure)))
@@ -58,7 +55,6 @@ def main():
 	db_connection = start_db()
 	already_downloaded = get_all_song_ids(db_connection)
 
-
 	for song in songs:
 		song_id = song['id']
 
@@ -83,7 +79,7 @@ def main():
 			os.mkdir(level_one)
 		except FileExistsError:
 			pass
-		except Exception as exc:
+		except Exception:
 			insert_song(db_connection, song_id, True)
 			continue
 
@@ -91,23 +87,25 @@ def main():
 			os.mkdir(full_path)
 		except FileExistsError:
 			pass
-		except Exception as exc:
+		except Exception:
 			insert_song(db_connection, song_id, True)
 			continue
 
 		try:
 			downloaded_song = mm.download_song(song_id)
-		except Exception as exc:
+		except Exception:
 			insert_song(db_connection, song_id, True)
+			downloaded_song = None
 
-		full_path += f"/{downloaded_song[0]}"
-		file_path = path.relpath(full_path)
-	
-		file_to_write = open(file_path, "wb")
-		file_to_write.write(downloaded_song[1])
-		file_to_write.close()
-		insert_song(db_connection, song_id)
+		if downloaded_song:
+			full_path += f"/{downloaded_song[0]}"
+			file_path = path.relpath(full_path)
+
+			file_to_write = open(file_path, "wb")
+			file_to_write.write(downloaded_song[1])
+			file_to_write.close()
+			insert_song(db_connection, song_id)
 
 
 if __name__ == "__main__":
-    main()
+	main()

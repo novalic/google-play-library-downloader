@@ -1,3 +1,7 @@
+Status
+=
+This repo is useless as Google Play Music doesn't exist anymore. I made a final update for the sake of it. 
+
 Google Play Music Library Download
 =
 
@@ -34,4 +38,3 @@ For this program to work you will need to (virtual environment recommended) inst
 
 - (pip install) sqlite3
 - (pip install) gmusicapi
-
